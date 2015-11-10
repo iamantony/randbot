@@ -89,20 +89,28 @@ class DBHandler(object):
     def get_last_msg_id(self):
         cursor = self.connection.cursor()
         cursor.execute('SELECT msg_id FROM last_msg LIMIT 1')
-        return cursor.fetchone()[0]
+        data = cursor.fetchone()
+        if data is None:
+            return None
+
+        return data[0]
 
     def set_last_msg_id(self, new_id):
         if new_id is None or len(new_id) == 0:
-            print("Invalid ID of last message: ", new_id)
+            print("Invalid ID of last message:", new_id)
             return
 
         cursor = self.connection.cursor()
-        cursor.execute('UPDATE last_msg SET msg_id=? WHERE id=0', (new_id,))
+        if self.get_last_msg_id() is None:
+            cursor.execute('INSERT INTO last_msg VALUES (null, ?)', (new_id,))
+        else:
+            cursor.execute('UPDATE last_msg SET msg_id=? WHERE id=0', (new_id,))
+
         self.connection.commit()
 
     def get_user_data(self, user_id):
         if user_id is None or len(user_id) == 0:
-            print("Invalid user ID: ", user_id)
+            print("Invalid user ID:", user_id)
             return None
 
         cursor = self.connection.cursor()
@@ -111,7 +119,7 @@ class DBHandler(object):
 
         data = cursor.fetchone()
         if data is None:
-            print("There is no info in database about user with ID: ", user_id)
+            print("There is no info in database about user with ID:", user_id)
             return None
 
         user_data = {'user_id': user_id, 'name': data[0], 'number': data[1]}
