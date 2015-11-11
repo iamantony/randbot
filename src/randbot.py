@@ -2,8 +2,8 @@ __author__ = 'Antony Cherepanov'
 
 import random
 import tweepy
-from src import dbhandler
-from src import generator
+import dbhandler
+import generator
 
 
 class RandBot(object):
