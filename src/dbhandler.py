@@ -101,10 +101,12 @@ class DBHandler(object):
             return
 
         cursor = self.connection.cursor()
-        if self.get_last_msg_id() is None:
+        msg_id = self.get_last_msg_id()
+        if msg_id is None:
             cursor.execute('INSERT INTO last_msg VALUES (null, ?)', (new_id,))
         else:
-            cursor.execute('UPDATE last_msg SET msg_id=? WHERE id=0', (new_id,))
+            cursor.execute('UPDATE last_msg SET msg_id=? WHERE msg_id=?',
+                           (new_id, msg_id))
 
         self.connection.commit()
 
@@ -119,7 +121,6 @@ class DBHandler(object):
 
         data = cursor.fetchone()
         if data is None:
-            print("There is no info in database about user with ID:", user_id)
             return None
 
         user_data = {'user_id': user_id, 'name': data[0], 'number': data[1]}
@@ -132,7 +133,6 @@ class DBHandler(object):
             return
 
         cursor = self.connection.cursor()
-        cursor.execute('INSERT INTO users VALUES (null, ?, ?, ?))',
-                       (user_data['user_id'], user_data['name'],
-                        user_data['number']))
+        values = (user_data['user_id'], user_data['name'], user_data['number'])
+        cursor.execute("INSERT INTO users VALUES (null, ?, ?, ?)", values)
         self.connection.commit()
