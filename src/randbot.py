@@ -1,5 +1,6 @@
 __author__ = 'Antony Cherepanov'
 
+import random
 import tweepy
 from src import dbhandler
 from src import generator
@@ -7,7 +8,6 @@ from src import generator
 
 class RandBot(object):
     def __init__(self):
-        self.tweets = list()
         self.db = dbhandler.DBHandler()
         self.auth = tweepy.OAuthHandler(*(self.db.get_consumer_data()))
         self.auth.set_access_token(*(self.db.get_access_token_data()))
@@ -16,24 +16,35 @@ class RandBot(object):
     def run(self):
         self.__process_last_mentions()
         self.__process_search()
-        self.__send_tweets()
 
     def __process_last_mentions(self):
+        print("Processing mentions")
+
         mentions = list()
-        msg_id = self.db.get_last_msg_id()
-        if msg_id is None:
+        last_msg_id = self.db.get_last_msg_id()
+        if last_msg_id is None:
             mentions = self.api.mentions_timeline(count=10)
         else:
-            mentions = self.api.mentions_timeline(since_id=msg_id, count=10)
+            mentions = self.api.mentions_timeline(since_id=last_msg_id,
+                                                  count=10)
 
+        mentions.reverse()
         for tweet in mentions:
-            print(tweet.text)
             user_data = self.db.get_user_data(tweet.author.id_str)
             if user_data is None:
                 self.__process_new_user(tweet)
             else:
-                self.tweets.append("Your number, @{0}, is {1}".format(
-                    user_data['name']), user_data['number'])
+                msg = "@{0} your number is {1}".format(user_data['name'],
+                                                       user_data['number'])
+
+                print("Replying to user: {0}".format(msg))
+                self.__send_tweet(
+                    self.__create_tweet_struct(tweet.id_str, msg))
+
+            self.db.set_last_msg_id(tweet.id_str)
+
+    def __create_tweet_struct(self, reply_id, text):
+        return {'id': reply_id, 'tweet': text}
 
     def __process_new_user(self, tweet):
         if tweet is None:
@@ -45,22 +56,42 @@ class RandBot(object):
         if number is None:
             return
 
-        # user_id = tweet.author.id_str
         user_name = tweet.author.screen_name
-        # user_data = {'user_id': user_id, 'name': user_name, 'number': number}
-        # self.db.add_user(user_data)
+        msg = "@{0} hi! I'm a bot and I have a number for you: {1}".format(
+            user_name, number)
 
-        self.tweets.append("Hi @{0}. I have a number for you: {1}".format(
-            user_name, number))
+        print("Adding new user: {0}".format(msg))
+        self.__send_tweet(self.__create_tweet_struct(tweet.id_str, msg))
+
+        user_data = {'user_id': tweet.author.id_str, 'name': user_name,
+                     'number': number}
+        self.db.add_user(user_data)
 
     def __process_search(self):
-        pass
+        print("Processing search")
 
-    def __send_tweets(self):
-        for tweet in self.tweets:
-            print(tweet)
+        keyword = 'random'
+        query = '{0} OR #{0}'.format(keyword)
+        results = self.api.search(q=query, result_type='mixed', count=100)
+
+        filtered_results = list()
+        authors = list()
+        for tweet in results:
+            if keyword in tweet.text and \
+                    tweet.author.id_str not in authors and \
+                    self.db.get_user_data(tweet.author.id_str) is None:
+                filtered_results.append(tweet)
+                authors.append(tweet.author.id_str)
+
+        index = random.randint(0, len(filtered_results) - 1)
+        self.__process_new_user(filtered_results[index])
+
+    def __send_tweet(self, msg):
+        return self.api.update_status(status=msg['tweet'],
+                                      in_reply_to_status_id=msg['id'])
 
 if __name__ == '__main__':
     print("Start RandBot")
     bot = RandBot()
     bot.run()
+    print("Done")
