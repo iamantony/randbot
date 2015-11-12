@@ -16,7 +16,7 @@ class RandBot(object):
 
     def run(self):
         self.__process_last_mentions()
-        self.__process_search()
+        #self.__process_search()
 
     def __process_last_mentions(self):
         print("Processing mentions")
