@@ -1,6 +1,5 @@
 __author__ = 'Antony Cherepanov'
 
-import os
 from datetime import datetime
 import random
 import tweepy
@@ -84,6 +83,10 @@ class RandBot(object):
                     self.db.get_user_data(tweet.author.id_str) is None:
                 filtered_results.append(tweet)
                 authors.append(tweet.author.id_str)
+
+        if len(filtered_results) == 0:
+            print("There are no new users in search result")
+            return
 
         index = random.randint(0, len(filtered_results) - 1)
         self.__process_new_user(filtered_results[index])
