@@ -1,5 +1,7 @@
 __author__ = 'Antony Cherepanov'
 
+import os
+from datetime import datetime
 import random
 import tweepy
 import dbhandler
@@ -34,8 +36,8 @@ class RandBot(object):
             if user_data is None:
                 self.__process_new_user(tweet)
             else:
-                msg = "@{0} your number is {1}".format(user_data['name'],
-                                                       user_data['number'])
+                msg = "@{0} your random number is {1}".format(
+                    user_data['name'], user_data['number'])
 
                 print("Replying to user: {0}".format(msg))
                 self.__send_tweet(
@@ -57,7 +59,7 @@ class RandBot(object):
             return
 
         user_name = tweet.author.screen_name
-        msg = "@{0} hi! I'm a bot and I have a number for you: {1}".format(
+        msg = "@{0} hi! I'm a randbot and I have a random number for you: {1}".format(
             user_name, number)
 
         print("Adding new user: {0}".format(msg))
@@ -91,7 +93,8 @@ class RandBot(object):
                                       in_reply_to_status_id=msg['id'])
 
 if __name__ == '__main__':
-    print("Start RandBot")
+    print("Start RandBot at " + str(datetime.today()))
     bot = RandBot()
     bot.run()
     print("Done")
+    print()
