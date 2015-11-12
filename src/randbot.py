@@ -16,7 +16,7 @@ class RandBot(object):
 
     def run(self):
         self.__process_last_mentions()
-        #self.__process_search()
+        self.__process_search()
 
     def __process_last_mentions(self):
         print("Processing mentions")
@@ -47,7 +47,7 @@ class RandBot(object):
     def __create_tweet_struct(self, reply_id, text):
         return {'id': reply_id, 'tweet': text}
 
-    def __process_new_user(self, tweet):
+    def __process_new_user(self, tweet, mention=True):
         if tweet is None:
             print("Invalid tweet - it is empty!")
             return
@@ -58,8 +58,12 @@ class RandBot(object):
             return
 
         user_name = tweet.author.screen_name
-        msg = "@{0} hi! I'm a randbot and I have a random number for you: {1}".format(
-            user_name, number)
+        msg = str()
+        if mention is True:
+            msg = "@{0} hi! I'm a randbot and I have a random number " \
+                  "for you: {1}".format(user_name, number)
+        else:
+            msg = "Random number for {0}: {1}".format(user_name, number)
 
         print("Adding new user: {0}".format(msg))
         self.__send_tweet(self.__create_tweet_struct(tweet.id_str, msg))
@@ -89,7 +93,7 @@ class RandBot(object):
             return
 
         index = random.randint(0, len(filtered_results) - 1)
-        self.__process_new_user(filtered_results[index])
+        self.__process_new_user(filtered_results[index], mention=False)
 
     def __send_tweet(self, msg):
         return self.api.update_status(status=msg['tweet'],
