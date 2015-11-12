@@ -7,13 +7,15 @@ import os
 class DBHandler(object):
     def __init__(self):
         self.db_name = 'bot.db'
+        self.db_path = os.path.dirname(os.path.abspath(__file__)) + \
+            os.sep + self.db_name
         self.__check_db()
-        self.connection = sqlite3.connect(self.db_name)
+        self.connection = sqlite3.connect(self.db_path)
         self.__check_consumer_data()
         self.__check_token_data()
 
     def __check_db(self):
-        if os.path.exists(self.db_name):
+        if os.path.exists(self.db_path):
             return
 
         print("Database do not exist")
@@ -21,7 +23,7 @@ class DBHandler(object):
 
     def __init_db(self):
         print("Database initialisation")
-        connection = sqlite3.connect(self.db_name)
+        connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
         cursor.execute('''CREATE TABLE consumer (
             id INTEGER PRIMARY KEY NOT NULL,
